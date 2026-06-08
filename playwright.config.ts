@@ -13,7 +13,7 @@ export default defineConfig({
     ['json', { outputFile: 'reports/playwright-report.json' }],
   ],
   use: {
-    baseURL: 'https://petstore.swagger.io/v2',
+    baseURL: process.env.API_URL ?? 'https://petstore.swagger.io/v2',
     trace: 'on-first-retry',
     extraHTTPHeaders: {
       Accept: 'application/json',

@@ -2,6 +2,9 @@
 # Playwright
 node_modules/
 
+# Environment variables
+.env
+
 # Claude Code local overrides
 .claude/settings.local.json
 .claude/logs/

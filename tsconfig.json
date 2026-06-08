@@ -8,7 +8,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
   },
   "include": ["lib/**/*.ts", "tests/**/*.ts", "playwright.config.ts"]
 }
