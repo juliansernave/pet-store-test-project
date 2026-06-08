@@ -1,0 +1,26 @@
+{
+  "name": "pet-store-test-project",
+  "version": "1.0.0",
+  "description": "API test suite for the Swagger Petstore demo (https://petstore.swagger.io/v2).",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:pet": "playwright test tests/pet",
+    "test:store": "playwright test tests/store",
+    "test:user": "playwright test tests/user",
+    "report": "playwright show-report",
+    "schema:sync": "curl -fsSL https://petstore.swagger.io/v2/swagger.json -o tests/fixtures/petstore-swagger.json",
+    "test:upload": "playwright test && npx qas-cli playwright-json-upload --attachments reports/playwright-report.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@faker-js/faker": "^9.0.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.2",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

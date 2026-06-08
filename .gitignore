@@ -1,0 +1,13 @@
+
+# Playwright
+node_modules/
+
+# Claude Code local overrides
+.claude/settings.local.json
+.claude/logs/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/reports/
