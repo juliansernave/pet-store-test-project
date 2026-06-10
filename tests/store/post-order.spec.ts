@@ -1,10 +1,11 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildOrder } from '../../lib/data/order';
+import { routes } from '../../lib/routes';
 
 test('POST /store/order places an order and returns it with id', async ({ api }) => {
   const payload = buildOrder({ status: 'placed', complete: true });
 
-  const created = await api.path('/store/order').body(payload).postRequest(200);
+  const created = await api.path(routes.store.orders).body(payload).postRequest(200);
 
   expect(created).shouldMatchSchema('Order');
   expect(created).toMatchObject({
@@ -17,7 +18,7 @@ test('POST /store/order places an order and returns it with id', async ({ api })
 
 test('POST /store/order with wrong-typed fields is rejected or sanitized', async ({ api }) => {
   const { status } = await api
-    .path('/store/order')
+    .path(routes.store.orders)
     .body({ id: 1, petId: 'not-a-number', quantity: true, status: 'placed', complete: true })
     .sendRaw('POST');
 

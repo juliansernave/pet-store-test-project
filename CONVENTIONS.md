@@ -70,6 +70,23 @@ test('POST /pet creates a pet', { tag: '@smoke' }, async ({ api }) => { ... });
 
 Filter on CI with `npx playwright test --grep @smoke`.
 
+## Route paths
+
+All endpoint paths are defined in `lib/routes.ts` and imported as `routes`. Never write path strings inline.
+
+```ts
+import { routes } from '../../lib/routes';
+
+// static path
+api.path(routes.pet.collection).body(payload).postRequest(200)
+
+// dynamic path
+api.path(routes.pet.byId(payload.id)).getRequest(200)
+api.path(routes.user.byUsername(user.username)).deleteRequest(200)
+```
+
+**Exception:** intentionally malformed path segments used in negative tests stay hardcoded, because they are inputs to the test, not route definitions — e.g. `/pet/not-a-number`, `/store/order/-1`, `/store/order/abc`.
+
 ## Test writing patterns
 
 Two primary code shapes — pick the one that matches the assertion:

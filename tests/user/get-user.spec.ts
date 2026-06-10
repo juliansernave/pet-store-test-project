@@ -1,11 +1,12 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildUser, uniqueUsername } from '../../lib/data/user';
+import { routes } from '../../lib/routes';
 
 test('GET /user/{username} returns a previously created user', async ({ api }) => {
   const payload = buildUser();
-  await api.path('/user').body(payload).postRequest(200);
+  await api.path(routes.user.collection).body(payload).postRequest(200);
 
-  const fetched = await api.path(`/user/${payload.username}`).getRequest(200);
+  const fetched = await api.path(routes.user.byUsername(payload.username)).getRequest(200);
 
   expect(fetched).shouldMatchSchema('User');
   expect(fetched).toMatchObject({
@@ -19,7 +20,7 @@ test('GET /user/{username} returns a previously created user', async ({ api }) =
 test('GET /user/{username} returns 404 for a non-existent username', async ({ api }) => {
   const ghost = uniqueUsername('ghost');
 
-  const body = await api.path(`/user/${ghost}`).getRequest(404);
+  const body = await api.path(routes.user.byUsername(ghost)).getRequest(404);
 
   expect(body).shouldMatchSchema('ApiResponse');
 });

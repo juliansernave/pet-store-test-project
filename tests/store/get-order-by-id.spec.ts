@@ -1,11 +1,12 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildOrder } from '../../lib/data/order';
+import { routes } from '../../lib/routes';
 
 test('GET /store/order/{orderId} returns a previously placed order', async ({ api }) => {
   const payload = buildOrder();
-  await api.path('/store/order').body(payload).postRequest(200);
+  await api.path(routes.store.orders).body(payload).postRequest(200);
 
-  const fetched = await api.path(`/store/order/${payload.id}`).getRequest(200);
+  const fetched = await api.path(routes.store.orderById(payload.id)).getRequest(200);
 
   expect(fetched).shouldMatchSchema('Order');
   expect(fetched).toMatchObject({
@@ -17,7 +18,7 @@ test('GET /store/order/{orderId} returns a previously placed order', async ({ ap
 });
 
 test('GET /store/order/{orderId} returns 404 for a non-existent id', async ({ api }) => {
-  const body = await api.path('/store/order/99999').getRequest(404);
+  const body = await api.path(routes.store.orderById(99999)).getRequest(404);
   expect(body).shouldMatchSchema('ApiResponse');
 });
 

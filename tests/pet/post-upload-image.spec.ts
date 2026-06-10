@@ -1,14 +1,15 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildPet } from '../../lib/data/pet';
 import { tinyPng } from '../../lib/data/image';
+import { routes } from '../../lib/routes';
 
 test('POST /pet/{petId}/uploadImage uploads an image and returns ApiResponse', async ({ api }) => {
   const payload = buildPet();
-  await api.path('/pet').body(payload).postRequest(200);
+  await api.path(routes.pet.collection).body(payload).postRequest(200);
 
   const fileName = `qa-${Date.now()}.png`;
   const response = (await api
-    .path(`/pet/${payload.id}/uploadImage`)
+    .path(routes.pet.uploadImage(payload.id))
     .multipart({
       additionalMetadata: 'qa-upload',
       file: { name: fileName, mimeType: 'image/png', buffer: tinyPng() },
@@ -21,7 +22,7 @@ test('POST /pet/{petId}/uploadImage uploads an image and returns ApiResponse', a
 
 test('POST /pet/{petId}/uploadImage for a non-existent petId returns ApiResponse or 404', async ({ api }) => {
   const { status, body } = await api
-    .path('/pet/9999999999/uploadImage')
+    .path(routes.pet.uploadImage(9999999999))
     .multipart({
       additionalMetadata: 'qa-upload-ghost',
       file: { name: 'ghost.png', mimeType: 'image/png', buffer: tinyPng() },

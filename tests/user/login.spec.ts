@@ -1,13 +1,14 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildUser } from '../../lib/data/user';
 import { tms } from '../../lib/qa-sphere';
+import { routes } from '../../lib/routes';
 
 test('GET /user/login with valid credentials succeeds and exposes session metadata', { ...tms(312), tag: '@smoke' }, async ({ api }) => {
   const user = buildUser({ password: 'Passw0rd!' });
-  await api.path('/user').body(user).postRequest(200);
+  await api.path(routes.user.collection).body(user).postRequest(200);
 
   const { status, headers, body } = await api
-    .path('/user/login')
+    .path(routes.user.login)
     .params({ username: user.username, password: user.password })
     .sendRaw('GET');
 
@@ -26,7 +27,7 @@ test('GET /user/login with valid credentials succeeds and exposes session metada
 
 test('GET /user/login with empty credentials is rejected', async ({ api }) => {
   const { status } = await api
-    .path('/user/login')
+    .path(routes.user.login)
     .params({ username: '', password: '' })
     .sendRaw('GET');
 
@@ -35,17 +36,17 @@ test('GET /user/login with empty credentials is rejected', async ({ api }) => {
 });
 
 test('GET /user/login with no query params is rejected', async ({ api }) => {
-  const { status } = await api.path('/user/login').sendRaw('GET');
+  const { status } = await api.path(routes.user.login).sendRaw('GET');
   expect([200, 400]).toContain(status);
 });
 
 test('GET /user/logout is idempotent and returns 200', async ({ api }) => {
   const user = buildUser();
-  await api.path('/user').body(user).postRequest(200);
+  await api.path(routes.user.collection).body(user).postRequest(200);
 
-  await api.path('/user/login').params({ username: user.username, password: user.password }).getRequest(200);
-  await api.path('/user/logout').getRequest(200);
+  await api.path(routes.user.login).params({ username: user.username, password: user.password }).getRequest(200);
+  await api.path(routes.user.logout).getRequest(200);
 
   // Calling logout again without an active session should still return 200 (default response per Swagger).
-  await api.path('/user/logout').getRequest(200);
+  await api.path(routes.user.logout).getRequest(200);
 });

@@ -129,5 +129,4 @@ npm run schema:sync     # refresh the pinned swagger.json from the live API
 - **QA Sphere integration**: annotate specs with `tms(caseId)` and upload results via `qas-cli`.
 - **Deterministic test target**: stand up a mock from the OpenAPI spec (e.g. Prism) so tests don't depend on the flaky public server, then lift `workers: 1` to parallelize.
 - **Wire `TEST_ENV`** to real per-environment config blocks.
-- **Type the responses**: add generics to `RequestHandler` so `postRequest<Pet>(200)` returns a typed body.
 - **Close coverage gaps**: more auth/negative-path and concurrency cases.

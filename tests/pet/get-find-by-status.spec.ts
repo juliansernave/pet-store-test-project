@@ -1,12 +1,13 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildPet, type Pet } from '../../lib/data/pet';
+import { routes } from '../../lib/routes';
 
 test('GET /pet/findByStatus?status=available returns pets filtered to that status', async ({ api }) => {
   const payload = buildPet({ status: 'available' });
-  await api.path('/pet').body(payload).postRequest(200);
+  await api.path(routes.pet.collection).body(payload).postRequest(200);
 
   const results = (await api
-    .path('/pet/findByStatus')
+    .path(routes.pet.findByStatus)
     .params({ status: 'available' })
     .getRequest(200)) as Pet[];
 
@@ -18,7 +19,7 @@ test('GET /pet/findByStatus?status=available returns pets filtered to that statu
 
 test('GET /pet/findByStatus with an unknown status returns 400 or 200 with empty array', async ({ api }) => {
   const { status, body } = await api
-    .path('/pet/findByStatus')
+    .path(routes.pet.findByStatus)
     .params({ status: 'notARealStatus' })
     .sendRaw('GET');
 
@@ -30,14 +31,14 @@ test('GET /pet/findByStatus with an unknown status returns 400 or 200 with empty
 });
 
 test('GET /pet/findByStatus with no status param returns 400 or empty result', async ({ api }) => {
-  const { status, body } = await api.path('/pet/findByStatus').sendRaw('GET');
+  const { status, body } = await api.path(routes.pet.findByStatus).sendRaw('GET');
   expect([200, 400]).toContain(status);
   if (status === 200) expect(Array.isArray(body)).toBe(true);
 });
 
 test('GET /pet/findByStatus supports multiple status values', async ({ api }) => {
   const results = (await api
-    .path('/pet/findByStatus')
+    .path(routes.pet.findByStatus)
     .params({ status: ['available', 'pending', 'sold'] })
     .getRequest(200)) as Pet[];
 

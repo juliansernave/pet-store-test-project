@@ -1,10 +1,11 @@
 import { test, expect } from '../../lib/fixtures';
 import { buildUser } from '../../lib/data/user';
+import { routes } from '../../lib/routes';
 
 test('POST /user creates a single user', async ({ api }) => {
   const payload = buildUser();
 
-  const response = (await api.path('/user').body(payload).postRequest(200)) as {
+  const response = (await api.path(routes.user.collection).body(payload).postRequest(200)) as {
     code: number;
     type: string;
     message: string;
