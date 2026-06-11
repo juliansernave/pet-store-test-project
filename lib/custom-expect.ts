@@ -1,8 +1,8 @@
 import { expect as baseExpect } from '@playwright/test';
-import { validateAgainstSchema } from './schema-validator';
+import { validateAgainstSchema, type DefinitionName } from './schema-validator';
 
 export const expect = baseExpect.extend({
-  shouldMatchSchema(received: unknown, definitionName: string) {
+  shouldMatchSchema(received: unknown, definitionName: DefinitionName) {
     const { valid, errors } = validateAgainstSchema(received, definitionName);
     return {
       pass: valid,

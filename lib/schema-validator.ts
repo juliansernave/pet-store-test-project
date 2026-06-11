@@ -25,7 +25,7 @@ function getValidator(name: string): ValidateFunction {
   return v;
 }
 
-export function validateAgainstSchema(body: unknown, definitionName: string): { valid: boolean; errors: string | null } {
+export function validateAgainstSchema(body: unknown, definitionName: DefinitionName): { valid: boolean; errors: string | null } {
   const validate = getValidator(definitionName);
   const valid = validate(body);
   return { valid, errors: valid ? null : ajv.errorsText(validate.errors, { separator: '\n  - ' }) };
