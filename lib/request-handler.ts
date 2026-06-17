@@ -1,9 +1,20 @@
-import { APIRequestContext, APIResponse, expect } from '@playwright/test';
+import { APIRequestContext, APIResponse, expect, test } from '@playwright/test';
 
 type Json = unknown;
 
 type MultipartParts = {
   [key: string]: string | number | boolean | { name: string; mimeType: string; buffer: Buffer };
+};
+
+export type Capture = {
+  method: string;
+  url: string;
+  requestHeaders: Record<string, string>;
+  requestBody: unknown;
+  status: number;
+  responseHeaders: Record<string, string>;
+  responseBody: string;
+  duration: number;
 };
 
 function safeJson(text: string): unknown {
@@ -14,6 +25,7 @@ export class RequestHandler {
   private request: APIRequestContext;
   private defaultBaseUrl: string;
   private defaultApiKey: string;
+  private captures: Capture[];
 
   private baseUrl: string | undefined;
   private apiPath = '';
@@ -24,10 +36,11 @@ export class RequestHandler {
   private apiMultipart: MultipartParts | undefined = undefined;
   private clearAuthFlag = false;
 
-  constructor(request: APIRequestContext, apiBaseUrl: string, apiKey = '') {
+  constructor(request: APIRequestContext, apiBaseUrl: string, apiKey = '', captures: Capture[] = []) {
     this.request = request;
     this.defaultBaseUrl = apiBaseUrl;
     this.defaultApiKey = apiKey;
+    this.captures = captures;
   }
 
   url(url: string) { this.baseUrl = url; return this; }
@@ -40,43 +53,83 @@ export class RequestHandler {
   clearAuth() { this.clearAuthFlag = true; return this; }
 
   async getRequest(statusCode: number | number[]): Promise<Json> {
-    const response = await this.request.get(this.getUrl(), { headers: this.getHeaders() });
-    return this.finish(response, statusCode);
+    return this.execute('GET', statusCode, (url, headers) => this.request.get(url, { headers }));
   }
 
   async postRequest(statusCode: number | number[]): Promise<Json> {
-    const response = await this.request.post(this.getUrl(), this.buildSendOptions());
-    return this.finish(response, statusCode);
+    const opts = this.buildSendOptions();
+    return this.execute('POST', statusCode, (url) => this.request.post(url, opts));
   }
 
   async putRequest(statusCode: number | number[]): Promise<Json> {
-    const response = await this.request.put(this.getUrl(), this.buildSendOptions());
-    return this.finish(response, statusCode);
+    const opts = this.buildSendOptions();
+    return this.execute('PUT', statusCode, (url) => this.request.put(url, opts));
   }
 
   async deleteRequest(statusCode: number | number[]): Promise<Json> {
-    const response = await this.request.delete(this.getUrl(), { headers: this.getHeaders() });
-    return this.finish(response, statusCode);
+    return this.execute('DELETE', statusCode, (url, headers) => this.request.delete(url, { headers }));
   }
 
-  // Escape hatch for ambiguous cases where the test needs to branch on status
-  // (e.g. "200 with empty array OR 400"). Returns status, headers, and parsed body — no assertion.
   async sendRaw(method: 'GET' | 'POST' | 'PUT' | 'DELETE'): Promise<{ status: number; headers: Record<string, string>; body: unknown }> {
     const url = this.getUrl();
     const headers = this.getHeaders();
+    const path = this.apiPath;
+    const requestBody = this.snapshotRequestBody();
     const opts = method === 'GET' || method === 'DELETE' ? { headers } : this.buildSendOptions();
-    const fn = { GET: this.request.get, POST: this.request.post, PUT: this.request.put, DELETE: this.request.delete }[method];
-    const response = await fn.call(this.request, url, opts as never);
     this.cleanUp();
-    const status = response.status();
-    const respHeaders = response.headers();
-    const ct = respHeaders['content-type'] ?? '';
-    let body: unknown = undefined;
-    if (status !== 204) {
-      const text = await response.text();
-      if (text) body = ct.includes('application/json') ? safeJson(text) : text;
-    }
-    return { status, headers: respHeaders, body };
+
+    return await test.step(`${method} ${path}`, async () => {
+      const fn = { GET: this.request.get, POST: this.request.post, PUT: this.request.put, DELETE: this.request.delete }[method];
+      const start = Date.now();
+      const response = await fn.call(this.request, url, opts as never);
+      const duration = Date.now() - start;
+      const status = response.status();
+      const respHeaders = response.headers();
+      const ct = respHeaders['content-type'] ?? '';
+      const bodyText = status === 204 ? '' : await response.text();
+
+      this.captures.push({ method, url, requestHeaders: headers, requestBody, status, responseHeaders: respHeaders, responseBody: bodyText, duration });
+      await test.step(`→ ${status} (${duration}ms)`, async () => {});
+
+      let body: unknown = undefined;
+      if (bodyText) body = ct.includes('application/json') ? safeJson(bodyText) : bodyText;
+      return { status, headers: respHeaders, body };
+    });
+  }
+
+  private async execute(
+    method: string,
+    statusCode: number | number[],
+    fn: (url: string, headers: Record<string, string>) => Promise<APIResponse>,
+  ): Promise<Json> {
+    const url = this.getUrl();
+    const headers = this.getHeaders();
+    const path = this.apiPath;
+    const requestBody = this.snapshotRequestBody();
+    this.cleanUp();
+
+    return await test.step(`${method} ${path}`, async () => {
+      const start = Date.now();
+      const response = await fn(url, headers);
+      const duration = Date.now() - start;
+      const status = response.status();
+      const respHeaders = response.headers();
+      const ct = respHeaders['content-type'] ?? '';
+      const bodyText = status === 204 ? '' : await response.text();
+
+      this.captures.push({ method, url, requestHeaders: headers, requestBody, status, responseHeaders: respHeaders, responseBody: bodyText, duration });
+      await test.step(`→ ${status} (${duration}ms)`, async () => {});
+
+      const expected = Array.isArray(statusCode) ? statusCode : [statusCode];
+      expect(
+        expected,
+        `Expected status in [${expected.join(', ')}] from ${url}, got ${status}`,
+      ).toContain(status);
+
+      if (status === 204) return undefined;
+      if (ct.includes('application/json')) return bodyText ? safeJson(bodyText) : undefined;
+      return bodyText;
+    });
   }
 
   private buildSendOptions() {
@@ -86,24 +139,16 @@ export class RequestHandler {
     return { headers, data: this.apiBody };
   }
 
-  private async finish(response: APIResponse, expectedStatus: number | number[]): Promise<Json> {
-    const url = response.url();
-    const actualStatus = response.status();
-    this.cleanUp();
-    const expected = Array.isArray(expectedStatus) ? expectedStatus : [expectedStatus];
-    expect(
-      expected,
-      `Expected status in [${expected.join(', ')}] from ${url}, got ${actualStatus}`,
-    ).toContain(actualStatus);
-
-    const contentType = response.headers()['content-type'] ?? '';
-    if (response.status() === 204) return undefined;
-    if (contentType.includes('application/json')) {
-      const text = await response.text();
-      if (!text) return undefined;
-      return safeJson(text);
+  private snapshotRequestBody(): unknown {
+    if (this.apiMultipart) {
+      const summary: Record<string, string> = {};
+      for (const [k, v] of Object.entries(this.apiMultipart)) {
+        summary[k] = typeof v === 'object' && 'buffer' in v ? `<file: ${v.name} (${v.buffer.length} bytes)>` : String(v);
+      }
+      return summary;
     }
-    return response.text();
+    if (this.apiForm) return this.apiForm;
+    return this.apiBody;
   }
 
   private getUrl(): string {

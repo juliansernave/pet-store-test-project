@@ -8,7 +8,10 @@
     "test:pet": "playwright test tests/pet",
     "test:store": "playwright test tests/store",
     "test:user": "playwright test tests/user",
-    "report": "playwright show-report",
+    "report": "npm run allure:serve",
+    "allure:generate": "allure generate allure-results -o allure-report --clean",
+    "allure:open": "allure open allure-report",
+    "allure:serve": "allure serve allure-results",
     "schema:sync": "curl -fsSL https://petstore.swagger.io/v2/swagger.json -o tests/fixtures/petstore-swagger.json",
     "test:upload": "playwright test && npx qas-cli playwright-json-upload --attachments reports/playwright-report.json"
   },
@@ -21,6 +24,8 @@
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.2",
     "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "allure-commandline": "^2.42.1",
+    "allure-playwright": "^3.10.0"
   }
 }

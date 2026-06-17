@@ -18,6 +18,11 @@ test('GET /store/inventory returns a status->count map', async ({ api }) => {
   }
 });
 
+test('INTENTIONAL FAILURE - demo for failing report output', async ({ api }) => {
+  const inventory = (await api.path(routes.store.inventory).getRequest(200)) as Record<string, number>;
+  expect(inventory).toHaveProperty('this-key-does-not-exist');
+});
+
 test('GET /store/inventory does not regress after creating an available pet', async ({ api }) => {
   const baseline = (await api.path(routes.store.inventory).getRequest(200)) as Record<string, number>;
   const baselineAvailable = baseline.available ?? 0;

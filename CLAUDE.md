@@ -9,7 +9,7 @@ npm test                  # run all specs
 npm run test:pet          # pet domain only
 npm run test:store        # store domain only
 npm run test:user         # user domain only
-npm run report            # open HTML report in browser
+npm run report            # generate + serve Allure report in browser
 npm run schema:sync       # refresh pinned swagger.json from live API
 npm run test:upload       # run tests + upload results to QA Sphere
 
