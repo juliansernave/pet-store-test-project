@@ -17,23 +17,9 @@ jobs:
       run: npm ci
     - name: Run Playwright tests
       run: npx playwright test
-    - name: Restore Allure history
-      uses: actions/cache/restore@v4
-      if: ${{ !cancelled() }}
-      with:
-        path: allure-results/history
-        key: allure-history-${{ github.run_id }}
-        restore-keys: |
-          allure-history-
     - name: Generate Allure report
       if: ${{ !cancelled() }}
       run: npx allure generate allure-results -o allure-report --clean
-    - name: Save Allure history
-      uses: actions/cache/save@v4
-      if: ${{ !cancelled() }}
-      with:
-        path: allure-report/history
-        key: allure-history-${{ github.run_id }}
     - uses: actions/upload-artifact@v5
       if: ${{ !cancelled() }}
       with:
