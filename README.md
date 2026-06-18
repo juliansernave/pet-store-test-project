@@ -18,6 +18,7 @@ flowchart TD
     data["data/\nfaker builders"]
     validator["schema-validator.ts\ncustom-expect.ts"]
     swagger["petstore-swagger.json\npinned contract"]
+    routes["routes.ts\nendpoint paths"]
     API(["Petstore API"])
 
     specs -- "import test & expect" --> fixtures
@@ -27,6 +28,7 @@ flowchart TD
     rh -- "HTTP" --> API
     data -- "payloads" --> specs
     validator -- "validates against" --> swagger
+    routes -- "path strings" --> specs
 ```
 
 ## Framework layers
