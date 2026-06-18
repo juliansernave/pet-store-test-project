@@ -1,6 +1,6 @@
 # Petstore API Test Suite
 
-API test suite for the public [Swagger Petstore](https://petstore.swagger.io/v2) demo API, built with **Playwright Test + TypeScript**. Covers 48 endpoint specs across three resource domains — `pet`, `store`, `user` — with schema validation and faker-generated payloads.
+API test suite for the public [Swagger Petstore](https://petstore.swagger.io/v2) demo API, built with **Playwright Test + TypeScript**. Covers 57 test cases across 22 spec files in three resource domains — `pet`, `store`, `user` — with schema validation and faker-generated payloads.
 
 ## Codebase diagram
 
@@ -46,6 +46,8 @@ Shared framework code that specs consume:
 | `config.ts` | Reads `API_URL` / `API_KEY` from env; single source of truth, nothing hardcoded in specs |
 | `custom-expect.ts` | Adds `expect(body).shouldMatchSchema('Pet')` |
 | `schema-validator.ts` | Ajv instance compiled from the pinned `swagger.json` |
+| `routes.ts` | Single source of truth for all endpoint path strings |
+| `qa-sphere.ts` | `tms(caseId)` helper for linking tests to QA Sphere test cases |
 | `data/` | faker-based builders — `buildPet()`, `buildOrder()`, `buildUser()` — return unique payloads each run |
 
 **3. External**
@@ -62,6 +64,8 @@ lib/
   schema-validator.ts             Ajv compiled from swagger definitions
   global-setup.ts                 Writes Allure environment + categories
   global-teardown.ts              Prints the report command after the run
+  routes.ts                       All endpoint path strings
+  qa-sphere.ts                    tms() helper for QA Sphere case linking
   data/                           Payload builders (pet, order, user, image)
 tests/
   pet/ store/ user/               Endpoint specs — one behavior per file
@@ -98,6 +102,8 @@ cp .env.example .env
 | `API_URL` | `https://petstore.swagger.io/v2` | Base URL of the target API |
 | `API_KEY` | `special-key` | Sent as the `api_key` header on every request |
 | `TEST_ENV` | `dev` | Label shown in console output (`dev` \| `staging` \| `prod`) |
+| `QA_SPHERE_TENANT_URL` | — | QA Sphere tenant base URL (required for `test:upload`) |
+| `QA_SPHERE_PROJECT_CODE` | — | QA Sphere project code (required for `test:upload`) |
 
 ## Running tests
 
@@ -106,6 +112,7 @@ npm test                # run all specs
 npm run test:pet        # pet domain only
 npm run test:store      # store domain only
 npm run test:user       # user domain only
+npm run test:upload     # run tests + upload results to QA Sphere
 npm run report          # build + serve the Allure report in a browser
 npm run allure:generate # build a static Allure report into allure-report/
 npm run allure:open     # open a previously generated static report
@@ -119,6 +126,7 @@ Three reporters are configured in `playwright.config.ts`:
 | Reporter | Purpose |
 |---|---|
 | `list` | Human-readable console output during the run |
+| `html` → `playwright-report/` | Playwright's built-in HTML report |
 | `json` → `reports/playwright-report.json` | Consumed by `qas-cli` for QA Sphere uploads |
 | `allure-playwright` → `allure-results/` | Raw results for the Allure report |
 
@@ -167,8 +175,6 @@ Prerequisite: `allure-commandline` is bundled as a dev dependency, so `npm insta
 
 ## Next steps
 
-- **CI/CD**: wire up GitHub Actions to run the suite on push/PR.
-- **QA Sphere integration**: annotate specs with `tms(caseId)` and upload results via `qas-cli`.
 - **Deterministic test target**: stand up a mock from the OpenAPI spec (e.g. Prism) so tests don't depend on the flaky public server, then lift `workers: 1` to parallelize.
 - **Wire `TEST_ENV`** to real per-environment config blocks.
 - **Close coverage gaps**: more auth/negative-path and concurrency cases.
