@@ -17,9 +17,18 @@ jobs:
       run: npm ci
     - name: Run Playwright tests
       run: npx playwright test
+    - name: Generate Allure report
+      if: ${{ !cancelled() }}
+      run: npx allure generate allure-results -o allure-report --clean
     - uses: actions/upload-artifact@v5
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
         path: playwright-report/
+        retention-days: 30
+    - uses: actions/upload-artifact@v5
+      if: ${{ !cancelled() }}
+      with:
+        name: allure-report
+        path: allure-report/
         retention-days: 30
